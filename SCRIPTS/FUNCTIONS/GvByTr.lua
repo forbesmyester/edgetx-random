@@ -15,27 +15,7 @@
 -- the script
 
 
-local GV_TO_RECORD_CHANGE=8 -- Base 0
-
-local function find_global_variable(to_find)
-
-    if to_find == "NTF" then
-        return 2
-    end
-
-    local index = 0
-    while index < 64 do
-        local gvd = model.getGlobalVariableDetails(index)
-        if gvd ~= nil then
-            if gvd.name == to_find then
-                return index
-            end
-        end
-        index = index + 1
-    end
-    return -1
-end
-
+local find_global_variable = loadScript("/SCRIPTS/LIB/find_global_variable.lua")()
 
 local function roundToBoundary(boundary, n)
     return n
@@ -63,46 +43,45 @@ end
 
 local function run()
     print("run()")
-    local index = 0
+    print(find_global_variable("NTF"))
+    local sourceIndex = 0
     local flightMode = getFlightMode()
-    local done = false
-    while index < 64 do
+    while sourceIndex < 64 do
         local name = ""
-        local rawname = getSourceName(index)
+        local rawname = getSourceName(sourceIndex)
         if (rawname ~= nil) then
             name = string.gsub(string.upper(rawname), '%W', '')
         end
-        local value = getSourceValue(index)
+        local value = getSourceValue(sourceIndex)
         if (name ~= nil) and (value ~= nil) and (string.sub(string.upper(name),1,2) == "GV") and (string.len(name) >= 3) and (string.len(name) <= 4) and (tonumber(string.sub(name,3,3))) then
-            local gvarNumber = tonumber(string.sub(name,3,3)) - 1
-            local gvarValue = model.getGlobalVariable(gvarNumber, flightMode)
+            local gvarIndex = tonumber(string.sub(name,3,3)) - 1
+            local gvarDetails = model.getGlobalVariableDetails(gvarIndex)
+            local gvarValue = model.getGlobalVariable(gvarIndex, flightMode)
             local oldGvarValue = gvarValue
             local controlValue = math.floor((value / 10) + 0.5)
-            local gvarValue = roundToBoundary(abs(controlValue), gvarValue)
             local newValue = gvarValue + controlValue
-            model.setGlobalVariable(gvarNumber, flightMode, newValue)
-            local gvarSetValue = model.getGlobalVariable(gvarNumber, flightMode)
-            print("CURRENT GVAR = " .. gvarNumber + 1 .. ", ROUNDED = " .. gvarValue .. ", CONTROL = " .. controlValue .. " : " .. oldGvarValue.. " -> " .. newValue .. " = " .. gvarSetValue)
-
-            if oldGvarValue ~= gvarValue then
-                -- playNumber(gvarValue, 0)
-                model.setGlobalVariable(GV_TO_RECORD_CHANGE, flightMode, gvarNumber)
+            if (newValue < gvarDetails.min) then
+                newValue = gvarDetails.min
             end
-            done = true
+            if (newValue > gvarDetails.max) then
+                newValue = gvarDetails.max
+            end
+            model.setGlobalVariable(gvarIndex, flightMode, newValue)
+
+            local gvarName = ""
+            local gvarDetails = model.getGlobalVariableDetails(gvarIndex)
+            if gvarDetails ~= nil then
+                gvarName = gvarDetails.name
+            end
+            print("CCURRENT GVAR = " .. gvarName .. ", GVARNUM = " .. gvarIndex + 1 .. ", ROUNDED = " .. gvarValue .. ", CONTROL = " .. controlValue .. " : " .. oldGvarValue.. " -> " .. newValue)
+
+            if oldGvarValue ~= newValue then
+                model.setGlobalVariable(find_global_variable("NTF", true), flightMode, gvarIndex)
+            end
         end
-        index = index + 1
+        sourceIndex = sourceIndex + 1
     end
     print ("DONE")
-    -- if done == true then
-    --     local gv = find_global_variable("NTF")
-    --     if (gv == -1) then
-    --         print("Could not find global variable NTF")
-    --         print("GvByTr: NTF Not Found")
-    --         return true
-    --     end
-    --     local ls = model.getGlobalVariable(gv, flightMode)
-    --     setSticky(ls, true)
-    -- end
 end
 
 local function background()

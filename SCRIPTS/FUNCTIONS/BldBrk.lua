@@ -16,6 +16,7 @@
 -- |                     |
 -- ========-5=0===========
 
+local find_global_variable = loadScript("/SCRIPTS/LIB/find_global_variable.lua")()
 
 local CRV_TO_FIND = "Br"
 local BRAKE_LRG = "BrL"
@@ -48,35 +49,6 @@ local function find_curve_index(to_find)
         index = index + 1
     end
     return first_nil
-end
-
-local function find_global_variable(to_find)
-
-    -- These are hacks because until 2.11 there is no way to get a Global variable by name in the Lua API
-    if to_find == BRAKE_LRG then
-        return 0
-    end
-    if to_find == BRAKE_SML then
-        return 1
-    end
-    if to_find == BRAKE_CNG then
-        return 2
-    end
-    -- End Hacks
-
-    print("find_global_variable: " .. to_find)
-
-    local index = 0
-    while index < 64 do
-        local gvd = model.getGlobalVariableDetails(index)
-        if gvd ~= nil then
-            if gvd.name == to_find then
-                return index
-            end
-        end
-        index = index + 1
-    end
-    return -1
 end
 
 local function write(curve_name, found_curve_index, found_lrg_index, found_cng_index, found_sml_index)
