@@ -46,6 +46,7 @@ local function run()
     print(find_global_variable("NTF"))
     local sourceIndex = 0
     local flightMode = getFlightMode()
+    model.setGlobalVariable(find_global_variable("NTF", true), flightMode, -99)
     while sourceIndex < 64 do
         local name = ""
         local rawname = getSourceName(sourceIndex)
@@ -73,9 +74,9 @@ local function run()
             if gvarDetails ~= nil then
                 gvarName = gvarDetails.name
             end
-            print("CCURRENT GVAR = " .. gvarName .. ", GVARNUM = " .. gvarIndex + 1 .. ", ROUNDED = " .. gvarValue .. ", CONTROL = " .. controlValue .. " : " .. oldGvarValue.. " -> " .. newValue)
 
             if oldGvarValue ~= newValue then
+                print("SGV" .. "-" .. find_global_variable("NTF", true) .. "/" .. flightMode .. "/" ..  gvarIndex)
                 model.setGlobalVariable(find_global_variable("NTF", true), flightMode, gvarIndex)
             end
         end
